@@ -1,12 +1,28 @@
-const http = require('http');
-const PORT = 3001;
+import { createServer } from "http";
+import { Server } from "socket.io";
+let count = 0;
 
-const server = http.createServer((req, res) => {
-  res.statusCode = 200;
-  res.setHeader('Content-Type', 'text/plain');
-  res.end('Hello World!');
+let httpServer = createServer();
+const io = new Server(httpServer, {
+  cors: {
+    origin: "http://localhost:3000",
+  },
 });
 
-server.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}/`);
+io.on("connection", (socket) => {
+  count++;
+  console.log("connected: ", count);
+
+  socket.on("disconnect", () => {
+    count--;
+    console.log("disconnected: ", count);
+    socket.emit("count", count);
+    socket.broadcast.emit("count", count);
+  });
+
+  socket.emit("count", count);
+  socket.broadcast.emit("count", count);
 });
+
+httpServer.listen(3001);
+console.log("listening port 3001");
